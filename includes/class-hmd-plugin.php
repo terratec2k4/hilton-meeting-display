@@ -1,72 +1,98 @@
 <?php
-defined('ABSPATH') || exit;
+/**
+ * Core Plugin Class
+ *
+ * @package HiltonMeetingDisplay
+ */
 
-if (!class_exists('HMD_Plugin')) {
+defined( 'ABSPATH' ) || exit;
 
-    final class HMD_Plugin
-    {
-        /**
-         * Instancia única.
-         *
-         * @var HMD_Plugin|null
-         */
-        private static $instance = null;
+if ( ! class_exists( 'HMD_Plugin' ) ) {
 
-        /**
-         * Devuelve la instancia.
-         */
-        public static function instance(): self
-        {
-            if (self::$instance === null) {
-                self::$instance = new self();
-            }
+	final class HMD_Plugin {
 
-            return self::$instance;
-        }
+		/**
+		 * Instancia única.
+		 *
+		 * @var HMD_Plugin|null
+		 */
+		private static $instance = null;
 
-        /**
-         * Constructor.
-         */
-        private function __construct()
-        {
-            $this->load_dependencies();
+		/**
+		 * Devuelve la instancia única del plugin.
+		 *
+		 * @return HMD_Plugin
+		 */
+		public static function instance(): HMD_Plugin {
 
-            add_action('plugins_loaded', [$this, 'init']);
-        }
+			if ( null === self::$instance ) {
+				self::$instance = new self();
+			}
 
-        /**
-         * Inicializa el plugin.
-         */
-        public function init(): void
-        {
-            new HMD_Admin();
-        }
+			return self::$instance;
+		}
 
-        /**
-         * Carga las dependencias.
-         */
-        private function load_dependencies(): void
-        {
-            require_once HMD_PLUGIN_DIR . 'includes/class-hmd-database.php';
-            require_once HMD_PLUGIN_DIR . 'includes/class-hmd-admin.php';
-        }
+		/**
+		 * Constructor.
+		 */
+		private function __construct() {
 
-        /**
-         * Activación.
-         */
-        public static function activate(): void
-        {
-            HMD_Database::install();
+			add_action(
+				'plugins_loaded',
+				array( $this, 'init' )
+			);
 
-            flush_rewrite_rules();
-        }
+		}
 
-        /**
-         * Desactivación.
-         */
-        public static function deactivate(): void
-        {
-            flush_rewrite_rules();
-        }
-    }
+		/**
+		 * Evita el clonado del singleton.
+		 */
+		private function __clone() {}
+
+		/**
+		 * Evita la deserialización.
+		 */
+		public function __wakeup() {
+
+			_doing_it_wrong(
+				__FUNCTION__,
+				esc_html__( 'This class cannot be unserialized.', 'hilton-meeting-display' ),
+				HMD_VERSION
+			);
+
+		}
+
+		/**
+		 * Inicializa el plugin.
+		 */
+		public function init(): void {
+
+			if ( is_admin() ) {
+				new HMD_Admin();
+			}
+
+		}
+
+		/**
+		 * Activación del plugin.
+		 */
+		public static function activate(): void {
+
+			HMD_Database::install();
+
+			flush_rewrite_rules();
+
+		}
+
+		/**
+		 * Desactivación del plugin.
+		 */
+		public static function deactivate(): void {
+
+			flush_rewrite_rules();
+
+		}
+
+	}
+
 }
