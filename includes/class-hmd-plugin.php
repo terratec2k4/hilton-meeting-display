@@ -7,91 +7,94 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! class_exists( 'HMD_Plugin' ) ) {
+final class HMD_Plugin {
 
-	final class HMD_Plugin {
+	/**
+	 * Singleton instance.
+	 *
+	 * @var HMD_Plugin|null
+	 */
+	private static ?HMD_Plugin $instance = null;
 
-		/**
-		 * Instancia única.
-		 *
-		 * @var HMD_Plugin|null
-		 */
-		private static $instance = null;
+	/**
+	 * Get singleton instance.
+	 *
+	 * @return HMD_Plugin
+	 */
+	public static function instance(): HMD_Plugin {
 
-		/**
-		 * Devuelve la instancia única del plugin.
-		 *
-		 * @return HMD_Plugin
-		 */
-		public static function instance(): HMD_Plugin {
-
-			if ( null === self::$instance ) {
-				self::$instance = new self();
-			}
-
-			return self::$instance;
+		if ( null === self::$instance ) {
+			self::$instance = new self();
 		}
 
-		/**
-		 * Constructor.
-		 */
-		private function __construct() {
+		return self::$instance;
+	}
 
-			add_action(
-				'plugins_loaded',
-				array( $this, 'init' )
-			);
+	/**
+	 * Constructor.
+	 */
+	private function __construct() {
 
-		}
+		add_action( 'plugins_loaded', array( $this, 'init' ) );
 
-		/**
-		 * Evita el clonado del singleton.
-		 */
-		private function __clone() {}
+	}
 
-		/**
-		 * Evita la deserialización.
-		 */
-		public function __wakeup() {
+	/**
+	 * Prevent cloning.
+	 */
+	private function __clone(): void {}
 
-			_doing_it_wrong(
-				__FUNCTION__,
-				esc_html__( 'This class cannot be unserialized.', 'hilton-meeting-display' ),
-				HMD_VERSION
-			);
+	/**
+	 * Prevent unserialize.
+	 */
+	public function __wakeup(): void {
 
-		}
+		throw new Exception(
+			'Cannot unserialize singleton ' . __CLASS__
+		);
 
-		/**
-		 * Inicializa el plugin.
-		 */
-		public function init(): void {
+	}
 
-			if ( is_admin() ) {
-				new HMD_Admin();
-			}
+	/**
+	 * Initialize plugin.
+	 */
+	public function init(): void {
 
-		}
+		load_plugin_textdomain(
+			'hilton-meeting-display',
+			false,
+			dirname( plugin_basename( HMD_PLUGIN_FILE ) ) . '/languages'
+		);
 
-		/**
-		 * Activación del plugin.
-		 */
-		public static function activate(): void {
+		if ( is_admin() ) {
 
-			HMD_Database::install();
+			// Admin menus.
+			new HMD_Admin();
 
-			flush_rewrite_rules();
+			// Rooms controller.
+			new HMD_Room_Controller();
 
 		}
 
-		/**
-		 * Desactivación del plugin.
-		 */
-		public static function deactivate(): void {
+	}
 
-			flush_rewrite_rules();
+	/**
+	 * Plugin activation.
+	 */
+	public static function activate(): void {
 
-		}
+		HMD_Database::install();
+
+		flush_rewrite_rules();
+
+	}
+
+	/**
+	 * Plugin deactivation.
+	 */
+	public static function deactivate(): void {
+
+		flush_rewrite_rules();
 
 	}
 
